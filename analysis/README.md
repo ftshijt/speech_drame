@@ -1,5 +1,10 @@
 # Rebuttal analyses and primary scoring
 
+For dataset acquisition, metadata-to-input conversion, model execution, and training,
+start with [the runnable workflow](../docs/RUNNING.md) and `python run.py options`.
+This page documents scoring and the advanced saved-experiment analyses.
+
+
 `evaluate.py` is the primary scorer for the revised paper. It reads saved
 predictions and canonical release metadata, masks missing human labels, preserves
 continuous expectation-decoded scores, and reports counts alongside each

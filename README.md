@@ -89,100 +89,45 @@ speech_drame/
     └── realism_data/   # Realism evaluation data
 ```
 
-## 🚀 Quick Start
+## 🚀 Run from a dataset
 
-### Prerequisites
+Start with the [dataset-to-results guide](docs/RUNNING.md), which connects released
+metadata and reconstructed audio to each runnable option. The single entry point
+is `python run.py`:
 
-- Python 3.10+
-- CUDA-compatible GPU (recommended for fine-tuning)
-- Conda environment manager
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Anuttacon/speech_drame.git
-   cd speech_drame
-   ```
-
-2. **Set up environment**
-   ```bash
-   conda create -n speech_drama python=3.10
-   conda activate speech_drama
-   pip install -r requirements.txt
-   ```
-
-3. **Configure API keys** (for cloud-based models)
-   ```bash
-   export OPENAI_API_KEY="your-openai-key"
-   export GOOGLE_API_KEY="your-google-key"
-   # Add other API keys as needed
-   ```
-
-### Basic Usage
-
-#### Realism Evaluation (Zero-shot)
 ```bash
-cd zeroshot
-PYTHONPATH=. python pyscripts/eval.py \
-    --model_name gemini25 \
-    --model_tag gemini-2.5-pro \
-    --prompt_version v1 \
-    --data_path ../data/realism_data/test.jsonl \
-    --output_path realism_results.jsonl \
-    --prompt_type combined
+pip install -r requirements/workflow.txt
+python run.py options
+python run.py demo --output runs/demo
 ```
 
-#### Archetype Evaluation (Zero-shot)
+The offline demo uses generated fixtures, not benchmark data or model judgments.
+For an actual reconstructed-audio snapshot:
+
 ```bash
-cd zeroshot
-PYTHONPATH=. python pyscripts/eval.py \
-    --model_name gemini25 \
-    --model_tag gemini-2.5-pro \
-    --prompt_version v1 \
-    --data_path ../data/archetype_data/test.jsonl \
-    --output_path archetype_results.jsonl \
-    --prompt_type archetype_combined
+python run.py prepare --track realism \
+  --metadata /data/realism/metadata/test_base.jsonl \
+  --asset-root /data/realism --output runs/realism-test
+pip install -r requirements/local.txt
+python run.py infer --workdir runs/realism-test \
+  --backend qwen2audio --name qwen-zs --dry-run
+# Remove --dry-run to execute the model after reviewing the generated command.
+python run.py infer --workdir runs/realism-test \
+  --backend qwen2audio --name qwen-zs
+python run.py score --workdir runs/realism-test --name qwen-zs
 ```
 
-#### Few-shot Evaluation
-```bash
-cd fewshot
-# For realism evaluation
-PYTHONPATH=. python pyscripts/eval.py \
-    --model_name gpt4o \
-    --model_tag gpt-4o-audio-preview \
-    --prompt_version v1 \
-    --data_path ../data/realism_data/test.jsonl \
-    --output_path fewshot_realism_results.jsonl \
-    --prompt_type combined
+Preparation maps the dataset schema into model inputs, stages real WAV files,
+and records hashes. Choose `--track archetype` for its separate metadata.
+The guide gives complete paths for saved-prediction scoring without audio,
+cloud zero-/few-shot judging, DRAME adapter inference, clean authentic-speech
+manifests, modality controls, and training your own checkpoint. It also explains
+what mel-only snapshots and README-only placeholder pages can currently support.
 
-# For archetype evaluation
-PYTHONPATH=. python pyscripts/eval.py \
-    --model_name gpt4o \
-    --model_tag gpt-4o-audio-preview \
-    --prompt_version v1 \
-    --data_path ../data/archetype_data/test.jsonl \
-    --output_path fewshot_archetype_results.jsonl \
-    --prompt_type archetype_combined
-```
-
-#### Fine-tuning
-```bash
-cd finetuning
-# Train for realism evaluation
-bash run_realism_train.sh
-
-# Train for archetype evaluation  
-bash run_archetype_train.sh
-
-# Or use Python directly
-python src/train_sft.py \
-    --model_name_or_path Qwen/Qwen2-Audio-7B-Instruct \
-    --data_file /path/to/data/train_all_real_v2/data.jsonl \
-    --out_dir exp/realism_sft_model \
-    --yaml_config conf/sft_lora.yaml
-```
+GPU model execution uses the saved experiment's core package versions; the
+workflow demo and scoring need only the small workflow dependencies. Cloud
+requirements do not install the local model stack. Model weights and dataset
+payloads must actually be present for their respective run paths.
 
 ## Release status and rebuttal updates
 

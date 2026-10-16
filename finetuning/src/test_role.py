@@ -43,6 +43,7 @@ class RoleTestArguments:
     Arguments for role-related testing.
     """
     model_path: Optional[str] = field(default=None, metadata={"help": "model directory path"})
+    base_model_path: Optional[str] = field(default=None, metadata={"help": "base model override for a local PEFT adapter"})
     data_file: Optional[str] = field(default=None, metadata={"help": "test data file path"})
     out_file: Optional[str] = field(default=None, metadata={"help": "output file path"})
     batch_size: Optional[int] = field(default=8, metadata={"help": "batch size for inference"})
@@ -515,13 +516,9 @@ def main():
 
     # Load model and processor
     logging.info(f"Loading model from {data_args.model_path}")
-    audio_processor = AutoProcessor.from_pretrained(data_args.model_path)
-    audio_model = Qwen2AudioForConditionalGeneration.from_pretrained(
-        data_args.model_path, 
-        torch_dtype=torch.bfloat16, 
-        device_map="auto"
-    )
-    
+    from utils.model_loading import load_model_and_processor
+    audio_model, audio_processor = load_model_and_processor(data_args.model_path, data_args.base_model_path)
+
     audio_model.eval()  # Set to evaluation mode
 
     # Load test data

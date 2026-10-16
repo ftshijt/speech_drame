@@ -111,3 +111,36 @@ reproduction still depends on authorized data, split manifests, predictions,
 checkpoint packaging, and source-specific provenance. The existing tracked
 bytecode and incomplete Kimi gitlink packaging are pre-existing repository
 issues; this change adds ignore rules but does not remove tracked artifacts.
+
+## Dataset-to-results workflow follow-up
+
+The public entry point `run.py` now connects a dataset snapshot to runnable
+options: `fetch`, `prepare`, `infer`, `train`, `score`, and an offline `demo`.
+The new `docs/RUNNING.md` leads with these routes and gives their prerequisites,
+commands, file handoffs, and expected outputs. It distinguishes saved-prediction
+scoring from model inference, mel features from reconstructed waveforms, and
+README placeholders from real payloads.
+
+Preparation maps canonical realism/archetype fields into existing model inputs,
+stages WAV audio (including FLAC conversion), checks declared reconstruction
+checksums, preserves canonical labels, stores input/audio hashes, and enforces
+training/test membership. Inference generates and can execute all required
+DRAME dimensions, a selected local/cloud baseline, repeated trials, or separate
+few-shot examples. Training consumes a separately prepared training bundle.
+
+The connected workflow also required fixing backend startup: baseline scripts
+now import only the selected model; Gemini uses the caller's API key or Vertex
+configuration; and both fine-tuned inference scripts explicitly attach local
+PEFT adapters to their base models. Dependency groups separate the lightweight
+workflow, cloud SDKs, local inference, and training. The local/training core pins
+were read from the saved experiment environment; a complete fresh GPU training
+installation was not performed.
+
+**45 targeted tests pass**, including local end-to-end fixtures, schema mapping for both tracks, audio conversion,
+command generation, leakage rejection, few-shot separation, CLI startup without
+GPU libraries, and adapter attachment are covered by the expanded tests. Full
+canonical-data conversion on dev-va was not executed: automatic approval review
+rejected transmitting the new workflow source to that host. No raw records,
+model weights, or media are added. A real dataset/checkpoint/API account is
+still required for its corresponding model run; the generated demo is explicitly
+marked as a fixture and does not claim benchmark performance.
