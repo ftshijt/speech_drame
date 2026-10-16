@@ -1,5 +1,7 @@
 # Few-shot Speech Drama Evaluation
 
+> Rebuttal update: use [the primary masked scorer](../analysis/README.md) for revised-paper results. The older plotting/scoring commands below retain historical imputation conventions. The clean authentic-speech protocol requires explicit disjoint training/test manifests.
+
 This module provides few-shot evaluation capabilities for AI models on speech drama generation tasks. It extends the zero-shot framework with example-based prompting to improve model performance through in-context learning.
 
 ## 🎯 Overview

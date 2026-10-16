@@ -26,15 +26,15 @@ Speech-DRAME distinguishes between two complementary evaluation strategies:
 - **🎭 Realism Evaluation**: A bottom-up approach grounded in real human speech that emphasizes nuanced role quality
 
 ### 2. **Human-Aligned Performance**
-Compared to zero-shot ALLM judges, DRAME-Eval achieves stronger agreement with human ratings:
-- **Archetype Evaluation**: Pearson correlation improves from 0.480 to 0.629
-- **Realism Evaluation**: Pearson correlation improves from 0.390 to 0.625
+On the benchmark distribution, DRAME-Eval exceeds the strongest evaluated baseline under a consistent masked protocol:
+- **Archetype Evaluation**: masked pooled Pearson correlation improves from 0.236 to 0.629
+- **Realism Evaluation**: masked pooled Pearson correlation improves from 0.387 to 0.602
 
 ### 3. **Comprehensive Framework**
 - **Multi-Modal Evaluation**: Combines audio and text analysis for comprehensive speech assessment
 - **Bilingual Support**: English and Chinese evaluation capabilities
 - **Multiple Approaches**: Supports zero-shot, few-shot, and fine-tuning evaluation methods
-- **Reproducible Benchmarks**: Transparent benchmark resources and evaluation protocols
+- **Reproducibility**: Rebuttal analysis code and explicit artifact requirements in [analysis/README.md](analysis/README.md)
 
 ## 🏗️ Framework Components
 
@@ -93,7 +93,7 @@ speech_drame/
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.10+
 - CUDA-compatible GPU (recommended for fine-tuning)
 - Conda environment manager
 
@@ -101,13 +101,13 @@ speech_drame/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Anuttacon/speech_drame.git
    cd speech_drame
    ```
 
 2. **Set up environment**
    ```bash
-   conda create -n speech_drama python=3.8
+   conda create -n speech_drama python=3.10
    conda activate speech_drama
    pip install -r requirements.txt
    ```
@@ -124,8 +124,10 @@ speech_drame/
 #### Realism Evaluation (Zero-shot)
 ```bash
 cd zeroshot
-python pyscripts/eval.py \
+PYTHONPATH=. python pyscripts/eval.py \
     --model_name gemini25 \
+    --model_tag gemini-2.5-pro \
+    --prompt_version v1 \
     --data_path ../data/realism_data/test.jsonl \
     --output_path realism_results.jsonl \
     --prompt_type combined
@@ -134,8 +136,10 @@ python pyscripts/eval.py \
 #### Archetype Evaluation (Zero-shot)
 ```bash
 cd zeroshot
-python pyscripts/eval.py \
+PYTHONPATH=. python pyscripts/eval.py \
     --model_name gemini25 \
+    --model_tag gemini-2.5-pro \
+    --prompt_version v1 \
     --data_path ../data/archetype_data/test.jsonl \
     --output_path archetype_results.jsonl \
     --prompt_type archetype_combined
@@ -145,15 +149,19 @@ python pyscripts/eval.py \
 ```bash
 cd fewshot
 # For realism evaluation
-python pyscripts/eval.py \
+PYTHONPATH=. python pyscripts/eval.py \
     --model_name gpt4o \
+    --model_tag gpt-4o-audio-preview \
+    --prompt_version v1 \
     --data_path ../data/realism_data/test.jsonl \
     --output_path fewshot_realism_results.jsonl \
     --prompt_type combined
 
 # For archetype evaluation
-python pyscripts/eval.py \
+PYTHONPATH=. python pyscripts/eval.py \
     --model_name gpt4o \
+    --model_tag gpt-4o-audio-preview \
+    --prompt_version v1 \
     --data_path ../data/archetype_data/test.jsonl \
     --output_path fewshot_archetype_results.jsonl \
     --prompt_type archetype_combined
@@ -171,19 +179,32 @@ bash run_archetype_train.sh
 # Or use Python directly
 python src/train_sft.py \
     --model_name_or_path Qwen/Qwen2-Audio-7B-Instruct \
-    --data_file ../data/realism_train_data.jsonl \
-    --output_dir exp/realism_sft_model
+    --data_file /path/to/data/train_all_real_v2/data.jsonl \
+    --out_dir exp/realism_sft_model \
+    --yaml_config conf/sft_lora.yaml
 ```
 
-## 🔜 Upcoming Releases
+## Release status and rebuttal updates
 
-The following resources will be released in upcoming updates:
+The public dataset destinations are
+[Anuttacon/speech-drame-evalbench](https://huggingface.co/datasets/Anuttacon/speech-drame-evalbench)
+and [ftshijt/speech-drame-evalbench](https://huggingface.co/datasets/ftshijt/speech-drame-evalbench).
+At the October 16, 2026 preparation check, both contained introductory dataset
+cards only; benchmark payloads and trained checkpoints were still pending.
+The experimental corpus contains 8,272 archetype and 15,414 realism records;
+these are experimental counts, not counts of publicly released data.
 
-- **Pre-trained Model**: The DRAME-Eval model weights will be made available for direct use
-- **Inference Pipeline**: Ready-to-use inference scripts with the pre-trained model for easy evaluation
-- **Dataset Samples**: Sample datasets will be released for research purposes
+The planned public subset includes only records and components authorized for
+release. The Anuttacon variant will contain metadata and mel features; ftshijt will add vocoder
+reconstructions for the same authorized IDs and split memberships. The dataset
+contributions are scoped to CC BY-NC 4.0; the code retains its Apache 2.0 license.
+Source waveforms and additional development data are excluded from that plan.
 
-Stay tuned for updates!
+[Rebuttal update review](docs/REBUTTAL_UPDATES.md) documents the corrections,
+validation, and remaining reproduction limits. [Analysis guide](analysis/README.md)
+explains the imported offline analyses, including reliability, uncertainty,
+per-language breakdowns, shortcut controls, and training ablations. Full-corpus
+results require the corresponding canonical metadata and saved predictions.
 
 ## 📊 Evaluation Methodology
 
@@ -192,7 +213,8 @@ Speech-DRAME introduces a novel dual evaluation paradigm that addresses the limi
 ### 🎭 **Realism Evaluation (Bottom-up Approach)**
 Grounded in real human speech patterns, this approach emphasizes nuanced role quality and narrative consistency. The evaluation focuses on how well generated speech captures the subtle characteristics of authentic human role-play.
 
-**11-Dimensional Rubric:**
+**11 annotated dimensions; 10 model outputs:** Semantic Match remains an annotation and is excluded from the model-output average because it largely overlaps Local Scene Fit.
+
 | Metric | Description | Research Rationale |
 |--------|-------------|-------------------|
 | **Pitch Dynamics** | Variety and appropriateness of pitch contours | Captures prosodic variation essential for emotional expression |
@@ -229,20 +251,31 @@ This approach measures adherence to broad role archetypes, focusing on role-play
 ## 📈 Research Results
 
 ### **Human Alignment Performance**
-Our evaluation model, DRAME-Eval, demonstrates significant improvements over zero-shot audio LLM judges:
 
-| Evaluation Type | Zero-shot ALLM | DRAME-Eval | Improvement |
-|----------------|----------------|------------|-------------|
-| **Archetype** | 0.480 | **0.629** | +31.0% |
-| **Realism** | 0.390 | **0.625** | +60.3% |
+The rebuttal uses human-label masking consistently for every model. The reported
+Avg is the mean of dimension-specific Pearson correlations, rather than one
+correlation over flattened dimensions.
 
-*Pearson correlation with human ratings*
+| Evaluation setting | Strongest baseline | DRAME-Eval |
+| --- | --- | --- |
+| Archetype, pooled benchmark distribution | 0.236 (Gemini 2.5 Pro zero-shot) | **0.629** |
+| Realism, benchmark distribution | 0.387 (Gemini 2.5 Pro few-shot) | **0.602** |
+| Authentic speech, 1,084 clean held-out recordings | 0.227 (GPT-4o audio few-shot; saved five-trial result) | **−0.142** |
 
-### **Key Findings**
-1. **Specialized Models Outperform General LLMs**: Fine-tuned evaluation models achieve substantially better human alignment than zero-shot approaches
-2. **Dual Paradigm Effectiveness**: Both archetype and realism evaluation provide complementary insights into speech role-play quality
-3. **Bilingual Capability**: Framework successfully handles both English and Chinese speech role-play scenarios
-4. **Scalable Evaluation**: DRAME-Eval enables efficient assessment of speech foundation models without human annotation
+The revised manuscript lists the authentic baseline as 0.226; the saved five-trial
+analysis computes 0.227289. This small discrepancy is recorded in the
+[review notes](docs/REBUTTAL_UPDATES.md).
+
+DRAME-Eval's within-speaker authentic-speech correlation is **+0.029**. The earlier
++0.247 authentic-speech result used a list containing training items and is
+superseded by the clean evaluation. The full 2,164-record authentic pool contains
+1,080 adaptation items and 1,084 held-out items; it must not be scored as one test set.
+Archetype's pooled 0.629 becomes a within-language macro of 0.389, so pooled
+alignment alone does not establish comparable discrimination within each language.
+
+The result supports evaluation within the benchmark distribution and exposes a
+synthetic-to-authentic transfer gap. It does not establish reliable judging of
+acting differences among authentic human performances.
 
 ### **Benchmark Contributions**
 - **Speech-DRAME-EvalBench**: First comprehensive benchmark for training speech evaluation models
@@ -322,34 +355,28 @@ Our evaluation model, DRAME-Eval, demonstrates significant improvements over zer
 
 ## 📈 Results Analysis
 
-The framework provides comprehensive analysis tools for both evaluation types:
+Use [the primary masked scorer](analysis/README.md) for revised-paper results:
 
-### Realism Evaluation Analysis
 ```bash
-# Generate average scores across trials
-python pyscripts/score_avg.py --input_dir results/realism/ --output_file realism_analysis.json
-
-# Analyze individual dimensions
-python pyscripts/score.py --input_dir results/realism/ --output_file realism_scores.json
+pip install -r analysis/requirements.txt
+python analysis/evaluate.py \
+  --track realism \
+  --metadata /path/to/canonical/metadata/test_base.jsonl \
+  --predictions /path/to/predictions/role_eval_*_exact.json \
+  --output analysis/out/realism.json
 ```
 
-### Archetype Evaluation Analysis
-```bash
-# Analyze archetype-specific performance
-python pyscripts/arche_score.py --input_dir results/archetype/ --output_file archetype_analysis.json
+The scorer supports saved baseline trials and fine-tuned continuous probability
+scores, coverage counts, per-language results, and shared-ID sample bootstrap CIs.
+Authentic-speech evaluation additionally requires `--split authentic`,
+`--train-ids`, and `--test-ids`; it rejects training/test overlap and filters the
+metadata pool to explicit held-out IDs. See the analysis guide for full examples,
+artifact layout, controls, and known differences from saved rebuttal intervals.
 
-# Generate archetype average scores
-python pyscripts/arche_score_avg.py --input_dir results/archetype/ --output_file archetype_avg.json
-```
-
-### Batch Analysis Scripts
-```bash
-# Realism evaluation analysis
-bash scripts/score_analysis.sh
-
-# Archetype evaluation analysis
-bash scripts/score_analysis_arche.sh
-```
+The older scorers in `zeroshot/pyscripts/`, `fewshot/pyscripts/`, and the plotting
+parsers in `finetuning/scripts/` implement historical conventions and are retained
+for historical comparisons. Their floor-imputed results are not the primary
+masked numbers above.
 
 ## 🔧 Configuration
 

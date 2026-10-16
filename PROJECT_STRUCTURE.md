@@ -1,5 +1,7 @@
 # Project Structure Documentation
 
+The rebuttal update adds `analysis/` (primary masked scoring, saved-experiment analyses, and artifact documentation), `tests/test_rebuttal_scoring.py`, and `finetuning/scripts/make_ablation_splits.py`. Start with [the analysis guide](analysis/README.md) for the revised results and clean authentic-speech protocol.
+
 This document provides a comprehensive overview of the Speech Drama Evaluation Framework project structure.
 
 ## 📁 Root Directory Structure
